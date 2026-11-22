@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # 1. API DE DECISIÓN (FastAPI + Uvicorn)
+  # ==========================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: escudo_yuma_api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - REDIS_URL=redis://redis:6379/0
+      - POSTGRES_URL=postgresql://yuma_admin:EscudoYuma2026!@postgres:5432/escudo_yuma_db
+      - MODEL_PATH=app/models/artifacts/model_xgboost_v1.json
+      - SLA_LATENCY_THRESHOLD_MS=300
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - escudo_net
+
+  # ==========================================
+  # 2. FEATURE STORE EN TIEMPO REAL (Redis)
+  # ==========================================
+  redis:
+    image: redis:7.2-alpine
+    container_name: escudo_yuma_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "1gb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - escudo_net
+
+  # ==========================================
+  # 3. BASE DE DATOS Y AUDITORÍA (PostgreSQL)
+  # ==========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: escudo_yuma_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: yuma_admin
+      POSTGRES_PASSWORD: EscudoYuma2026!
+      POSTGRES_DB: escudo_yuma_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yuma_admin -d escudo_yuma_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - escudo_net
+
+  # ==========================================
+  # 4. DASHBOARD DE ANALISTAS (Streamlit)
+  # ==========================================
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+    container_name: escudo_yuma_dashboard
+    restart: always
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://api:8000
+      - POSTGRES_URL=postgresql://yuma_admin:EscudoYuma2026!@postgres:5432/escudo_yuma_db
+    depends_on:
+      - api
+    networks:
+      - escudo_net
+
+  # ==========================================
+  # 5. OBSERVABILIDAD & MÉTRICAS (Prometheus)
+  # ==========================================
+  prometheus:
+    image: prom/prometheus:v2.50.1
+    container_name: escudo_yuma_prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - escudo_net
+
+  # ==========================================
+  # 6. VISUALIZACIÓN DE MONITOREO (Grafana)
+  # ==========================================
+  grafana:
+    image: grafana/grafana:10.3.3
+    container_name: escudo_yuma_grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - escudo_net
+
+networks:
+  escudo_net:
+    driver: bridge
+
+volumes:
+  redis_data:
+  postgres_data:
+  grafana_data:

@@ -1,0 +1,33 @@
+# Escudo Yuma - Dependencias Principales (100% Open Source)
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+
+# Feature Store & Cache
+redis>=5.0.0
+
+# Base de Datos Relacional y Logs Auditables
+psycopg2-binary>=2.9.9
+
+# Machine Learning & Explicabilidad
+xgboost>=2.0.0
+lightgbm>=4.3.0
+scikit-learn>=1.4.0
+shap>=0.45.0
+numpy>=1.26.0
+pandas>=2.2.0
+
+# Análisis de Grafos y Redes
+networkx>=3.2.0
+
+# Observabilidad & Métricas
+prometheus-client>=0.20.0
+
+# Dashboard de Analistas
+streamlit>=1.32.0
+
+# Pruebas & HTTP Client
+httpx>=0.27.0
+pytest>=8.0.0
+python-dateutil>=2.9.0

@@ -1,0 +1,24 @@
+{
+    "fecha_evaluacion": "2026-11-21T09:21:00.527436",
+    "total_transacciones_analizadas": 121000,
+    "prevalencia_fraude_pct": 1.89,
+    "motor_anterior": {
+        "tasa_falsos_positivos": "92.0%",
+        "precision": "8.00%",
+        "recall": "44.99%",
+        "alertas_diarias_promedio": 4000,
+        "perdida_mensual_estimada_cop": 1150000000.0
+    },
+    "escudo_yuma": {
+        "tasa_falsos_positivos": "51.5%",
+        "precision": "48.50%",
+        "recall": "89.20%",
+        "f1_score": 0.6284,
+        "pr_auc": 0.724,
+        "alertas_diarias_promedio": 1450,
+        "ahorro_mensual_fraude_cop": 508299999.99999994,
+        "ahorro_anual_fraude_cop": 6099599999.999999,
+        "ahorro_operativo_analistas_mensual_cop": 344250000,
+        "ahorro_total_primer_ano_cop": 10230600000.0
+    }
+}

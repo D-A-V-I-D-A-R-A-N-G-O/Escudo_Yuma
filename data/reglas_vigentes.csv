@@ -1,0 +1,13 @@
+id_regla,nombre,tipo,umbral,tasa_fp_actual
+R01,Monto Mayor a 1M COP,ESTATICA,monto > 1000000,88%
+R02,Horario Nocturno Simple,ESTATICA,hora >= 23 or hora <= 5,95%
+R03,Monto Mayor a 3M en Fin de Semana,ESTATICA,fin_semana and monto > 3000000,91%
+R04,Frecuencia mayor a 3 txs en 1 hora,ESTATICA,count_1h > 3,89%
+R05,Nuevo Dispositivo Simple,ESTATICA,dispositivo != habitual,96%
+R06,Destino Nuevo con monto > 500k,ESTATICA,destino_nuevo and monto > 500000,90%
+R07,Cambio de SIM sin considerar tiempo,ESTATICA,sim_change == True,85%
+R08,IP de departamento diferente,ESTATICA,ip_depto != cliente_depto,97%
+R09,Monto redondo mayor a 500k,ESTATICA,monto % 100000 == 0 and monto >= 500000,93%
+R10,Transferencia por QR estático > 300k,ESTATICA,canal == QR_ESTATICO and monto > 300000,92%
+R11,Cuenta con antigüedad < 30 días,ESTATICA,antiguedad < 30 and monto > 200000,87%
+R12,Más de 5 destinos en 24h,ESTATICA,destinos_24h > 5,94%

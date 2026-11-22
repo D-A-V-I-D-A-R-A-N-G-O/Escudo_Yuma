@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escudo Yuma | Centro de Demostración & PoC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col">
+
+    <!-- CABECERA -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="bg-emerald-500/10 border border-emerald-500/30 p-2 rounded-xl text-emerald-400">
+                <i data-lucide="shield-check" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-base font-bold bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">ESCUDO YUMA • PLATAFORMA ANTIFRAUDE</h1>
+                <p class="text-xs text-slate-400">Billetera Digital Yuma Pay (SEDPE) • Calificación Pre-Transaccional en &lt; 300 ms</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="toggleSplitScreen()" id="btn-toggle-split" class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-2 transition shadow-lg shadow-emerald-500/20">
+                <i data-lucide="columns" class="w-4 h-4"></i>
+                <span id="split-btn-text">Ver en Pantalla Dividida (Demo Lado a Lado)</span>
+            </button>
+            <a href="/docs" target="_blank" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 text-xs flex items-center gap-1.5 transition">
+                <i data-lucide="book-open" class="w-4 h-4"></i> Swagger API
+            </a>
+        </div>
+    </header>
+
+    <!-- VISTA 1: CARDS DE ACCESO A LAS 2 PÁGINAS -->
+    <main id="hub-cards-view" class="flex-1 max-w-6xl mx-auto px-6 py-12 flex flex-col justify-center items-center w-full">
+        <div class="text-center max-w-2xl mb-10">
+            <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30">Prueba de Concepto Interactiva</span>
+            <h2 class="text-3xl font-black tracking-tight text-slate-100 mt-3">Selecciona el Entorno a Ejecutar</h2>
+            <p class="text-sm text-slate-400 mt-2">
+                Experimenta el flujo real de Yuma Pay: realiza transferencias desde la app bancaria del cliente y observa cómo el monitor del analista intercepta cualquier anomalía en tiempo real.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+            <!-- TARJETA 1: APP DEL BANCO (YUMA PAY) -->
+            <div class="p-8 rounded-3xl bg-slate-900 border-2 border-slate-800 hover:border-emerald-500/50 transition-all shadow-xl hover:shadow-emerald-500/10 flex flex-col justify-between group">
+                <div class="space-y-4">
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                        <i data-lucide="smartphone" class="w-7 h-7"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Experiencia Cliente</span>
+                        <h3 class="text-xl font-bold text-slate-100 mt-2">Billetera Digital Yuma Pay</h3>
+                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                            Simula la app móvil bancaria del usuario. Envía dinero a Nequi, Bancolombia o QR, consulta saldo y activa escenarios de prueba (SIM Swapping, reseteo de clave, dispositivo no habitual).
+                        </p>
+                    </div>
+                    <ul class="text-xs text-slate-300 space-y-1.5 pt-2">
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Transferencias en vivo pre-transaccionales</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Desafío biométrico facial (2FA)</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Comprobantes bancarios instantáneos</li>
+                    </ul>
+                </div>
+                <div class="pt-6">
+                    <a href="/banco" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-500/20">
+                        <i data-lucide="arrow-right-circle" class="w-4 h-4"></i>
+                        Entrar a la App del Banco (/banco)
+                    </a>
+                </div>
+            </div>
+
+            <!-- TARJETA 2: MONITOR DEL ADMINISTRADOR (ESCUDO YUMA) -->
+            <div class="p-8 rounded-3xl bg-slate-900 border-2 border-slate-800 hover:border-rose-500/50 transition-all shadow-xl hover:shadow-rose-500/10 flex flex-col justify-between group">
+                <div class="space-y-4">
+                    <div class="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 group-hover:scale-110 transition-transform">
+                        <i data-lucide="shield-alert" class="w-7 h-7"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded">Consola de Control</span>
+                        <h3 class="text-xl font-bold text-slate-100 mt-2">Monitor Antifraude & Analistas</h3>
+                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                            Centro de operaciones de seguridad. Recibe notificaciones y alarmas sonoras en vivo cuando salta una irregularidad, gestiona reglas personalizadas en caliente e inspecciona explicabilidad SHAP (Ley 1581).
+                        </p>
+                    </div>
+                    <ul class="text-xs text-slate-300 space-y-1.5 pt-2">
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-rose-400"></i> Notificaciones de alerta en tiempo real (&lt; 15 ms)</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-rose-400"></i> Creador de reglas antifraude en caliente</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-rose-400"></i> Expedientes auditables y factores SHAP</li>
+                    </ul>
+                </div>
+                <div class="pt-6">
+                    <a href="/monitor" class="w-full py-3 bg-slate-800 hover:bg-slate-750 text-slate-100 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition border border-slate-700">
+                        <i data-lucide="arrow-right-circle" class="w-4 h-4"></i>
+                        Entrar al Monitor (/monitor)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- VISTA 2: PANTALLA DIVIDIDA LADO A LADO (SPLIT SCREEN DEMO) -->
+    <div id="hub-split-view" class="flex-1 w-full flex flex-col md:flex-row hidden overflow-hidden">
+        <!-- FRAME IZQUIERDO: BANCO -->
+        <div class="w-full md:w-[420px] lg:w-[480px] border-r border-slate-800 bg-slate-950 flex flex-col">
+            <div class="px-4 py-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300">
+                <span class="font-bold flex items-center gap-1.5"><i data-lucide="smartphone" class="w-3.5 h-3.5 text-emerald-400"></i> App del Banco (Cliente)</span>
+                <a href="/banco" target="_blank" class="text-slate-500 hover:text-slate-300"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i></a>
+            </div>
+            <iframe src="/banco" class="w-full flex-1 border-0"></iframe>
+        </div>
+
+        <!-- FRAME DERECHO: MONITOR ADMIN -->
+        <div class="flex-1 bg-slate-950 flex flex-col">
+            <div class="px-4 py-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300">
+                <span class="font-bold flex items-center gap-1.5"><i data-lucide="shield-alert" class="w-3.5 h-3.5 text-rose-400"></i> Monitor de Seguridad & Alertas en Vivo</span>
+                <a href="/monitor" target="_blank" class="text-slate-500 hover:text-slate-300"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i></a>
+            </div>
+            <iframe src="/monitor" class="w-full flex-1 border-0"></iframe>
+        </div>
+    </div>
+
+    <script>
+        let isSplit = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+
+        function toggleSplitScreen() {
+            isSplit = !isSplit;
+            const cardsView = document.getElementById('hub-cards-view');
+            const splitView = document.getElementById('hub-split-view');
+            const btnText = document.getElementById('split-btn-text');
+
+            if (isSplit) {
+                cardsView.classList.add('hidden');
+                splitView.classList.remove('hidden');
+                btnText.innerText = 'Ver Menú de Páginas';
+            } else {
+                cardsView.classList.remove('hidden');
+                splitView.classList.add('hidden');
+                btnText.innerText = 'Ver en Pantalla Dividida (Demo Lado a Lado)';
+            }
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

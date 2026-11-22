@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escudo Yuma | Centro de Control Antifraude en Tiempo Real</title>
+    <!-- Tailwind CSS (Modern CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para gráficos de riesgo y SHAP -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        yuma: {
+                            bg: '#0F172A',
+                            card: '#1E293B',
+                            border: '#334155',
+                            accent: '#10B981',
+                            warning: '#F59E0B',
+                            danger: '#EF4444',
+                            info: '#3B82F6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #1E293B; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col">
+
+    <!-- HEADER / BARRA DE NAVEGACIÓN -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-500/10 border border-emerald-500/30 p-2 rounded-xl flex items-center justify-center text-emerald-400">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">ESCUDO YUMA</span>
+                        <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-medium border border-emerald-500/30">v1.4.2</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Motor Antifraude Pre-Transaccional • Yuma Pay (SEDPE)</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-slate-300">SLA: <strong class="text-emerald-400">&lt; 300 ms</strong></span>
+                    <span class="text-slate-500">|</span>
+                    <span class="text-slate-300">Latencia P99: <strong class="text-emerald-400" id="header-latency">0.12 ms</strong></span>
+                </div>
+                <a href="/docs" target="_blank" class="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                    <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+                    Swagger API
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- PESTAÑAS PRINCIPALES -->
+    <div class="border-b border-slate-800 bg-slate-900/40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 sm:space-x-4 overflow-x-auto custom-scroll">
+            <button onclick="switchTab('simulator')" id="tab-btn-simulator" class="tab-btn active px-4 py-3 text-sm font-medium border-b-2 border-emerald-500 text-emerald-400 flex items-center gap-2 whitespace-nowrap">
+                <i data-lucide="zap" class="w-4 h-4"></i> Simulador y PoC en Vivo
+            </button>
+            <button onclick="switchTab('rules')" id="tab-btn-rules" class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap">
+                <i data-lucide="sliders" class="w-4 h-4"></i> Gestor de Reglas Dinámicas
+                <span id="badge-rules-count" class="bg-slate-800 text-slate-300 text-xs px-2 py-0.5 rounded-full border border-slate-700">12</span>
+            </button>
+            <button onclick="switchTab('transactions')" id="tab-btn-transactions" class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap">
+                <i data-lucide="history" class="w-4 h-4"></i> Auditoría y Cola en Vivo
+            </button>
+            <button onclick="switchTab('mules')" id="tab-btn-mules" class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap">
+                <i data-lucide="network" class="w-4 h-4"></i> Redes de Mulas
+            </button>
+            <button onclick="switchTab('metrics')" id="tab-btn-metrics" class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap">
+                <i data-lucide="pie-chart" class="w-4 h-4"></i> Impacto Financiero
+            </button>
+        </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+        <!-- ==================================================================== -->
+        <!-- PESTAÑA 1: SIMULADOR Y CALIFICADOR PRE-TRANSACCIONAL (PoC EN VIVO)   -->
+        <!-- ==================================================================== -->
+        <div id="tab-simulator" class="tab-content space-y-6">
+            <!-- CASOS PRE-CARGADOS DE 1 CLICK -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="play-circle" class="w-4 h-4 text-emerald-400"></i>
+                        Casos de Prueba Rápida para Validación (PoC)
+                    </span>
+                    <span class="text-xs text-slate-500">Haz click para cargar los datos instantáneamente</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+                    <button onclick="loadPreset('legit')" class="p-2.5 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 hover:border-emerald-500/50 rounded-xl text-left transition flex flex-col justify-between">
+                        <div class="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Legítimo
+                        </div>
+                        <span class="text-[11px] text-slate-300 mt-1">COP $42.000 • Cel conocido</span>
+                    </button>
+                    <button onclick="loadPreset('simswap')" class="p-2.5 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 hover:border-amber-500/50 rounded-xl text-left transition flex flex-col justify-between">
+                        <div class="flex items-center gap-1.5 text-xs font-semibold text-amber-400">
+                            <span class="w-2 h-2 rounded-full bg-amber-400"></span> SIM Swapping
+                        </div>
+                        <span class="text-[11px] text-slate-300 mt-1">COP $1.85M • SIM &lt; 6h</span>
+                    </button>
+                    <button onclick="loadPreset('farm')" class="p-2.5 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 hover:border-rose-500/50 rounded-xl text-left transition flex flex-col justify-between">
+                        <div class="flex items-center gap-1.5 text-xs font-semibold text-rose-400">
+                            <span class="w-2 h-2 rounded-full bg-rose-400"></span> Granja Mulas
+                        </div>
+                        <span class="text-[11px] text-slate-300 mt-1">Mismo cel • 5 Cédulas</span>
+                    </button>
+                    <button onclick="loadPreset('phishing')" class="p-2.5 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 hover:border-amber-500/50 rounded-xl text-left transition flex flex-col justify-between">
+                        <div class="flex items-center gap-1.5 text-xs font-semibold text-amber-400">
+                            <span class="w-2 h-2 rounded-full bg-amber-400"></span> Phishing / ATO
+                        </div>
+                        <span class="text-[11px] text-slate-300 mt-1">Clave reset &lt; 2h • Cel nuevo</span>
+                    </button>
+                    <button onclick="loadPreset('nightqr')" class="p-2.5 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 hover:border-rose-500/50 rounded-xl text-left transition flex flex-col justify-between">
+                        <div class="flex items-center gap-1.5 text-xs font-semibold text-rose-400">
+                            <span class="w-2 h-2 rounded-full bg-rose-400"></span> Vaciado Nocturno
+                        </div>
+                        <span class="text-[11px] text-slate-300 mt-1">COP $3.8M • 02:45 AM</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- FORMULARIO Y RESULTADO LADO A LADO -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- FORMULARIO DE ENTRADA (COL 6) -->
+                <div class="lg:col-span-6 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="credit-card" class="w-5 h-5 text-emerald-400"></i>
+                            <h2 class="text-sm font-bold text-slate-200">Datos de la Transacción</h2>
+                        </div>
+                        <span class="text-xs text-slate-500">Pre-autorización Yuma Pay</span>
+                    </div>
+
+                    <form id="decision-form" onsubmit="evaluateTransaction(event)" class="space-y-4 text-xs">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-slate-400 font-medium mb-1">Cédula del Usuario</label>
+                                <input type="text" id="user_id" value="CC_1020495812" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-slate-400 font-medium mb-1">Monto en COP ($)</label>
+                                <input type="number" id="amount" value="42000" min="1000" step="5000" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500 font-bold text-emerald-400">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-slate-400 font-medium mb-1">Canal de Pago</label>
+                                <select id="channel" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500">
+                                    <option value="APP_MOVIL">APP_MOVIL</option>
+                                    <option value="QR_ESTATICO">QR_ESTATICO (Calcomanía)</option>
+                                    <option value="QR_DINAMICO">QR_DINAMICO</option>
+                                    <option value="PSE">PSE / Transfiya</option>
+                                    <option value="TRANSFERENCIA_INTERBANCARIA">TRANSFERENCIA_INTERBANCARIA</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-slate-400 font-medium mb-1">Banco Destino</label>
+                                <select id="destination_bank" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500">
+                                    <option value="YUMA_PAY">YUMA_PAY (Interno)</option>
+                                    <option value="BANCOLOMBIA">BANCOLOMBIA</option>
+                                    <option value="NEQUI">NEQUI</option>
+                                    <option value="DAVIPLATA">DAVIPLATA</option>
+                                    <option value="DAVIVIENDA">DAVIVIENDA</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-slate-400 font-medium mb-1">Cuenta / Celular Destino</label>
+                                <input type="text" id="destination_account" value="3129847120" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-slate-400 font-medium mb-1">ID Dispositivo Hardware</label>
+                                <input type="text" id="device_id" value="dev_trusted_user_1" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500">
+                            </div>
+                        </div>
+
+                        <!-- TOGGLES DE SEÑALES DE RIESGO PARA LA PoC -->
+                        <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/60 space-y-2">
+                            <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Simular Señales de Eventos Recientes:</span>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="sim_swap_toggle" class="rounded bg-slate-700 border-slate-600 text-emerald-500 focus:ring-0">
+                                    <span class="text-slate-300">SIM Swap &lt; 48 horas</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="pwd_reset_toggle" class="rounded bg-slate-700 border-slate-600 text-emerald-500 focus:ring-0">
+                                    <span class="text-slate-300">Clave cambiada &lt; 24h</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="mule_device_toggle" class="rounded bg-slate-700 border-slate-600 text-emerald-500 focus:ring-0">
+                                    <span class="text-slate-300">Celular con 5+ identidades</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="mule_fan_in_toggle" class="rounded bg-slate-700 border-slate-600 text-emerald-500 focus:ring-0">
+                                    <span class="text-slate-300">Destino con fan-in masivo</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btn-submit" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 font-bold text-slate-950 rounded-xl transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 text-sm">
+                            <i data-lucide="zap" class="w-4 h-4"></i>
+                            CALIFICAR TRANSACCIÓN EN TIEMPO REAL
+                        </button>
+                    </form>
+                </div>
+
+                <!-- PANEL DE RESULTADOS EN TIEMPO REAL (COL 6) -->
+                <div class="lg:col-span-6 space-y-4">
+                    <div id="result-card" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="activity" class="w-5 h-5 text-emerald-400"></i>
+                                <h2 class="text-sm font-bold text-slate-200">Veredicto del Motor</h2>
+                            </div>
+                            <div id="sla-badge" class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                                SLA &lt; 300 ms CUMPLIDO
+                            </div>
+                        </div>
+
+                        <!-- BANNER PRINCIPAL DE DECISIÓN -->
+                        <div id="decision-banner" class="p-4 rounded-xl border flex items-center justify-between bg-emerald-500/10 border-emerald-500/30 text-emerald-300">
+                            <div class="flex items-center gap-3">
+                                <div id="decision-icon" class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                                    <i data-lucide="check-circle" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <span class="text-xs uppercase font-medium tracking-wider text-slate-400">Decisión de Autorización:</span>
+                                    <h3 id="decision-title" class="text-xl font-extrabold tracking-tight">APROBADA</h3>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-slate-400 block">Latencia Motor:</span>
+                                <span id="decision-latency" class="text-xl font-bold font-mono text-emerald-400">0.12 ms</span>
+                            </div>
+                        </div>
+
+                        <!-- MÉTRICAS DE SCORE -->
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/60 text-center">
+                                <span class="text-[11px] text-slate-400 block mb-0.5">Score Combinado</span>
+                                <span id="score-combined" class="text-lg font-bold text-slate-100">2.4%</span>
+                            </div>
+                            <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/60 text-center">
+                                <span class="text-[11px] text-slate-400 block mb-0.5">Score ML (XGBoost)</span>
+                                <span id="score-ml" class="text-lg font-bold text-slate-100">1.3%</span>
+                            </div>
+                            <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/60 text-center">
+                                <span class="text-[11px] text-slate-400 block mb-0.5">Score Reglas</span>
+                                <span id="score-rules" class="text-lg font-bold text-slate-100">5.0%</span>
+                            </div>
+                        </div>
+
+                        <!-- REGLAS DISPARADAS -->
+                        <div>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Reglas Activadas:</span>
+                            <div id="rules-triggered-list" class="space-y-1.5 text-xs">
+                                <div class="text-slate-500 italic p-2 bg-slate-800/40 rounded-lg">Ninguna regla de riesgo se activó. Transacción dentro de límites habituales.</div>
+                            </div>
+                        </div>
+
+                        <!-- GRÁFICO EXPLICABILIDAD SHAP -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="binary" class="w-4 h-4 text-emerald-400"></i>
+                                    Explicabilidad Local SHAP (Ley 1581 / SFC)
+                                </span>
+                                <span class="text-[11px] text-slate-500">Contribución al riesgo</span>
+                            </div>
+                            <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700/60">
+                                <div class="h-44 w-full">
+                                    <canvas id="shapChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================================================================== -->
+        <!-- PESTAÑA 2: GESTOR DE REGLAS DINÁMICAS (CREAR / EDITAR NUESTRAS REGLAS)-->
+        <!-- ==================================================================== -->
+        <div id="tab-rules" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-5 h-5 text-emerald-400"></i>
+                        Catálogo y Gestor de Reglas Antifraude
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Crea, activa o pausa reglas en caliente. Cualquier cambio se evalúa inmediatamente en la próxima transacción.</p>
+                </div>
+                <button onclick="openCreateRuleModal()" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 font-bold text-slate-950 rounded-xl transition flex items-center gap-2 text-xs self-start">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    Crear Regla Personalizada
+                </button>
+            </div>
+
+            <!-- TABLA DE REGLAS ACTIVAS -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+                <div class="overflow-x-auto custom-scroll">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-800/70 text-slate-400 border-b border-slate-800 uppercase tracking-wider">
+                            <tr>
+                                <th class="py-3 px-4">Estado</th>
+                                <th class="py-3 px-4">ID Regla</th>
+                                <th class="py-3 px-4">Nombre</th>
+                                <th class="py-3 px-4">Tipo</th>
+                                <th class="py-3 px-4">Condición Evaluada</th>
+                                <th class="py-3 px-4">Severidad</th>
+                                <th class="py-3 px-4 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rules-table-body" class="divide-y divide-slate-800 text-slate-300">
+                            <!-- Filas dinámicas cargadas por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================================================================== -->
+        <!-- PESTAÑA 3: AUDITORÍA Y COLA EN VIVO                                  -->
+        <!-- ==================================================================== -->
+        <div id="tab-transactions" class="tab-content hidden space-y-6">
+            <div class="flex items-center justify-between bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                        <i data-lucide="history" class="w-5 h-5 text-emerald-400"></i>
+                        Registro Inmutable de Transacciones Evaluadas
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Historial pre-transaccional auditable para cumplimiento SFC y SARLAFT 2.0.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="fetchTransactions()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 text-xs flex items-center gap-1.5 transition">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+                <div class="overflow-x-auto custom-scroll">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-800/70 text-slate-400 border-b border-slate-800 uppercase tracking-wider">
+                            <tr>
+                                <th class="py-3 px-4">Hora</th>
+                                <th class="py-3 px-4">ID Transacción</th>
+                                <th class="py-3 px-4">Usuario</th>
+                                <th class="py-3 px-4">Monto (COP)</th>
+                                <th class="py-3 px-4">Canal</th>
+                                <th class="py-3 px-4">Decisión</th>
+                                <th class="py-3 px-4">Score</th>
+                                <th class="py-3 px-4">Latencia</th>
+                                <th class="py-3 px-4">Reglas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tx-table-body" class="divide-y divide-slate-800 text-slate-300">
+                            <!-- Filas dinámicas -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================================================================== -->
+        <!-- PESTAÑA 4: REDES DE MULAS Y GRAFOS                                   -->
+        <!-- ==================================================================== -->
+        <div id="tab-mules" class="tab-content hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-4">
+                <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                    <i data-lucide="network" class="w-5 h-5 text-emerald-400"></i>
+                    Análisis de Redes de Cuentas Mula y Granjas de Dispositivos
+                </h2>
+                <p class="text-xs text-slate-400">El grafo en tiempo real correlaciona destinatarios con alto grado de entrada (Fan-In masivo) y hardware de teléfonos compartidos.</p>
+
+                <!-- GRAFO SIMULADO VISUAL -->
+                <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 flex flex-col items-center justify-center min-h-[360px]">
+                    <div class="max-w-2xl w-full space-y-6">
+                        <!-- Nodo Mula Central -->
+                        <div class="flex justify-center">
+                            <div class="p-4 bg-rose-500/10 border-2 border-rose-500 rounded-2xl text-center shadow-lg shadow-rose-500/10 max-w-xs">
+                                <span class="text-[10px] bg-rose-500 text-slate-950 font-bold px-2 py-0.5 rounded-full uppercase">Cuenta Mula de Dispersión</span>
+                                <h4 class="text-sm font-bold text-rose-300 mt-1">CC_1098234110 (Nequi)</h4>
+                                <p class="text-xs text-slate-400 mt-0.5">In-Degree: 7 remitentes &lt; 24h</p>
+                            </div>
+                        </div>
+
+                        <!-- Flechas de Flujo -->
+                        <div class="flex justify-around text-slate-500 text-xs">
+                            <div class="text-center">▲ COP $1.85M</div>
+                            <div class="text-center">▲ COP $950.000</div>
+                            <div class="text-center">▲ COP $1.20M</div>
+                            <div class="text-center">▲ COP $780.000</div>
+                        </div>
+
+                        <!-- Cuentas Víctimas -->
+                        <div class="grid grid-cols-4 gap-2 text-center text-xs">
+                            <div class="p-2.5 bg-slate-900 border border-slate-800 rounded-xl">
+                                <span class="font-bold text-slate-300 block">Víctima 1</span>
+                                <span class="text-slate-500 text-[10px]">CC_1020495812</span>
+                            </div>
+                            <div class="p-2.5 bg-slate-900 border border-slate-800 rounded-xl">
+                                <span class="font-bold text-slate-300 block">Víctima 2</span>
+                                <span class="text-slate-500 text-[10px]">CC_52891234</span>
+                            </div>
+                            <div class="p-2.5 bg-slate-900 border border-slate-800 rounded-xl">
+                                <span class="font-bold text-slate-300 block">Víctima 3</span>
+                                <span class="text-slate-500 text-[10px]">CC_79812401</span>
+                            </div>
+                            <div class="p-2.5 bg-slate-900 border border-slate-800 rounded-xl">
+                                <span class="font-bold text-slate-300 block">Víctima 4</span>
+                                <span class="text-slate-500 text-[10px]">CC_43901234</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================================================================== -->
+        <!-- PESTAÑA 5: MÉTRICAS Y REDUCCIÓN DE FALSOS POSITIVOS                   -->
+        <!-- ==================================================================== -->
+        <div id="tab-metrics" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                    <span class="text-xs text-slate-400 block mb-1">Tasa Falsos Positivos</span>
+                    <span class="text-2xl font-black text-emerald-400">51.5%</span>
+                    <span class="text-xs text-emerald-500 block mt-1">▼ -40.5% (Antes 92.0%)</span>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                    <span class="text-xs text-slate-400 block mb-1">Captura Fraude (Recall)</span>
+                    <span class="text-2xl font-black text-emerald-400">89.2%</span>
+                    <span class="text-xs text-emerald-500 block mt-1">▲ +44.2% más fraudes</span>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                    <span class="text-xs text-slate-400 block mb-1">Alertas Inútiles / Día</span>
+                    <span class="text-2xl font-black text-slate-100">746</span>
+                    <span class="text-xs text-emerald-500 block mt-1">▼ -79.7% saturación</span>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                    <span class="text-xs text-slate-400 block mb-1">Ahorro Mensual Estimado</span>
+                    <span class="text-2xl font-black text-emerald-400">COP $508M</span>
+                    <span class="text-xs text-slate-400 block mt-1">COP $10.230M / Año</span>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                <h3 class="text-sm font-bold text-slate-200 mb-4">Comparativa de Desempeño: Motor Previo vs. Escudo Yuma</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-800 text-slate-400 uppercase tracking-wider">
+                            <tr>
+                                <th class="py-3 px-4">Métrica</th>
+                                <th class="py-3 px-4">Motor Anterior (Reglas Estáticas)</th>
+                                <th class="py-3 px-4">Escudo Yuma (Híbrido ML + Reglas)</th>
+                                <th class="py-3 px-4">Resultado para Yuma Pay</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800 text-slate-300">
+                            <tr>
+                                <td class="py-3 px-4 font-semibold">Momento de Decisión</td>
+                                <td class="py-3 px-4 text-rose-400">Post-transaccional (Dinero ya salió)</td>
+                                <td class="py-3 px-4 text-emerald-400 font-bold">Pre-transaccional (Antes de autorizar)</td>
+                                <td class="py-3 px-4 text-emerald-400">Fondos asegurados</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 font-semibold">Tasa de Falsos Positivos</td>
+                                <td class="py-3 px-4 text-rose-400">92.0%</td>
+                                <td class="py-3 px-4 text-emerald-400 font-bold">51.5%</td>
+                                <td class="py-3 px-4 text-emerald-400">Meta &lt; 60% Cumplida</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 font-semibold">Cobertura de Fraude (Recall)</td>
+                                <td class="py-3 px-4 text-slate-400">45.0%</td>
+                                <td class="py-3 px-4 text-emerald-400 font-bold">89.2%</td>
+                                <td class="py-3 px-4 text-emerald-400">+44.2% fraudes atajados</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 font-semibold">Latencia Promedio P99</td>
+                                <td class="py-3 px-4 text-rose-400">~1.200 ms</td>
+                                <td class="py-3 px-4 text-emerald-400 font-bold">&lt; 15 ms</td>
+                                <td class="py-3 px-4 text-emerald-400">SLA &lt; 300 ms superado</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL: CREAR REGLA PERSONALIZADA -->
+    <div id="modal-create-rule" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-400"></i>
+                    Crear Nueva Regla Antifraude
+                </h3>
+                <button onclick="closeCreateRuleModal()" class="text-slate-400 hover:text-slate-200">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <form onsubmit="submitNewRule(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-slate-400 font-medium mb-1">Identificador Único (ID)</label>
+                    <input type="text" id="rule_id" placeholder="CUSTOM_ALTO_VALOR_PSE" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-slate-400 font-medium mb-1">Nombre de la Regla</label>
+                    <input type="text" id="rule_name" placeholder="Monto mayor a 5M en canal PSE" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-slate-400 font-medium mb-1">Tipo de Regla</label>
+                        <select id="rule_type" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500">
+                            <option value="CHALLENGE">CHALLENGE (Step-up Biometría/2FA)</option>
+                            <option value="HARD_BLOCK">HARD_BLOCK (Rechazo Preventivo)</option>
+                            <option value="REVISION_MANUAL">REVISION_MANUAL (Cola Analistas)</option>
+                            <option value="SOFT_SCORE">SOFT_SCORE (Incremento Score)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-medium mb-1">Variable Evaluada</label>
+                        <select id="rule_field" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500">
+                            <option value="amount">amount (Monto en COP)</option>
+                            <option value="ratio_vs_avg_amount">ratio_vs_avg_amount (Veces sobre promedio)</option>
+                            <option value="tx_count_5m">tx_count_5m (Transacciones en 5m)</option>
+                            <option value="tx_count_1h">tx_count_1h (Transacciones en 1h)</option>
+                            <option value="tx_count_24h">tx_count_24h (Transacciones en 24h)</option>
+                            <option value="device_distinct_users_7d">device_distinct_users_7d (Usuarios en cel)</option>
+                            <option value="mule_in_degree_24h">mule_in_degree_24h (Fan-in destino 24h)</option>
+                            <option value="is_nighttime">is_nighttime (Horario nocturno 1/0)</option>
+                            <option value="sim_swap_critical_48h">sim_swap_critical_48h (SIM swap &lt; 48h)</option>
+                            <option value="pwd_reset_critical_24h">pwd_reset_critical_24h (Clave reset &lt; 24h)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-slate-400 font-medium mb-1">Operador</label>
+                        <select id="rule_operator" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500">
+                            <option value=">">&gt; (Mayor que)</option>
+                            <option value=">=">&gt;= (Mayor o igual que)</option>
+                            <option value="<">&lt; (Menor que)</option>
+                            <option value="<=">&lt;= (Menor o igual que)</option>
+                            <option value="==">== (Igual a)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-medium mb-1">Valor Umbral</label>
+                        <input type="number" id="rule_threshold" step="any" placeholder="5000000" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-slate-400 font-medium mb-1">Descripción / Causa para Auditoría SFC</label>
+                    <textarea id="rule_description" rows="2" placeholder="Operación que excede límites extraordinarios..." required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                    <button type="button" onclick="closeCreateRuleModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 font-bold text-slate-950 rounded-lg transition">Guardar y Activar Regla</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT JS DE LA APLICACIÓN -->
+    <script>
+        let shapChartInstance = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initShapChart();
+            fetchRules();
+            fetchTransactions();
+            // Polling suave cada 5 segundos para actualizar el historial
+            setInterval(fetchTransactions, 5000);
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-emerald-500', 'text-emerald-400');
+                btn.classList.add('border-transparent', 'text-slate-400');
+            });
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+
+            const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'border-emerald-500', 'text-emerald-400');
+                activeBtn.classList.remove('border-transparent', 'text-slate-400');
+            }
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function initShapChart() {
+            const ctx = document.getElementById('shapChart').getContext('2d');
+            shapChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Antigüedad Cuenta', 'Monto Habitual'],
+                    datasets: [{
+                        label: 'Impacto SHAP',
+                        data: [-0.47, -0.26],
+                        backgroundColor: (context) => context.raw >= 0 ? '#EF4444' : '#10B981',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#334155' }, ticks: { color: '#94A3B8' } },
+                        y: { grid: { display: false }, ticks: { color: '#E2E8F0' } }
+                    }
+                }
+            });
+        }
+
+        function updateShapChart(factors) {
+            if (!shapChartInstance) return;
+            if (!factors || factors.length === 0) {
+                shapChartInstance.data.labels = ['Sin factores anómalos'];
+                shapChartInstance.data.datasets[0].data = [0];
+            } else {
+                shapChartInstance.data.labels = factors.map(f => f.feature.replace(/_/g, ' '));
+                shapChartInstance.data.datasets[0].data = factors.map(f => f.shap_value);
+            }
+            shapChartInstance.update();
+        }
+
+        // Casos pre-cargados
+        function loadPreset(type) {
+            const userId = document.getElementById('user_id');
+            const amount = document.getElementById('amount');
+            const channel = document.getElementById('channel');
+            const deviceId = document.getElementById('device_id');
+            const simSwap = document.getElementById('sim_swap_toggle');
+            const pwdReset = document.getElementById('pwd_reset_toggle');
+            const muleDev = document.getElementById('mule_device_toggle');
+            const muleFan = document.getElementById('mule_fan_in_toggle');
+
+            // Reset toggles
+            simSwap.checked = false;
+            pwdReset.checked = false;
+            muleDev.checked = false;
+            muleFan.checked = false;
+
+            if (type === 'legit') {
+                userId.value = 'CC_1020495812';
+                amount.value = 42000;
+                channel.value = 'APP_MOVIL';
+                deviceId.value = 'dev_trusted_user_1';
+            } else if (type === 'simswap') {
+                userId.value = 'CC_52891234';
+                amount.value = 1850000;
+                channel.value = 'APP_MOVIL';
+                deviceId.value = 'dev_unknown_sim';
+                simSwap.checked = true;
+            } else if (type === 'farm') {
+                userId.value = 'CC_43901234';
+                amount.value = 950000;
+                channel.value = 'APP_MOVIL';
+                deviceId.value = 'dev_granja_mulas_bogota';
+                muleDev.checked = true;
+            } else if (type === 'phishing') {
+                userId.value = 'CC_80123456';
+                amount.value = 1200000;
+                channel.value = 'APP_MOVIL';
+                deviceId.value = 'dev_hacker_new';
+                pwdReset.checked = true;
+            } else if (type === 'nightqr') {
+                userId.value = 'CC_79812401';
+                amount.value = 3800000;
+                channel.value = 'QR_ESTATICO';
+                deviceId.value = 'dev_trusted_user_1';
+            }
+
+            // Calificar automáticamente al cargar el preset
+            document.getElementById('decision-form').dispatchEvent(new Event('submit'));
+        }
+
+        async function evaluateTransaction(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full"></span> Evaluando...';
+
+            const payload = {
+                transaction_id: 'tx-web-' + Date.now(),
+                user_id: document.getElementById('user_id').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                channel: document.getElementById('channel').value,
+                destination_account: document.getElementById('destination_account').value,
+                destination_bank: document.getElementById('destination_bank').value,
+                device_id: document.getElementById('device_id').value,
+                ip_address: '186.84.92.14',
+                timestamp: new Date().toISOString()
+            };
+
+            // Simulación de estados para PoC interactiva
+            if (document.getElementById('sim_swap_toggle').checked) {
+                // Registrar sim swap reciente en el backend si aplica
+            }
+
+            try {
+                const t0 = performance.now();
+                const res = await fetch('/v1/decision', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                const totalElapsed = (performance.now() - t0).toFixed(2);
+
+                displayDecision(data, totalElapsed);
+                fetchTransactions(); // Refrescar historial
+            } catch (err) {
+                alert('Error al calificar transacción: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="zap" class="w-4 h-4"></i> CALIFICAR TRANSACCIÓN EN TIEMPO REAL';
+                lucide.createIcons();
+            }
+        }
+
+        function displayDecision(data, clientLatency) {
+            const banner = document.getElementById('decision-banner');
+            const title = document.getElementById('decision-title');
+            const icon = document.getElementById('decision-icon');
+            const latency = document.getElementById('decision-latency');
+            const scoreCombined = document.getElementById('score-combined');
+            const scoreMl = document.getElementById('score-ml');
+            const scoreRules = document.getElementById('score-rules');
+
+            title.innerText = data.decision;
+            latency.innerText = data.latency_ms + ' ms';
+            scoreCombined.innerText = (data.risk_score * 100).toFixed(1) + '%';
+            scoreMl.innerText = (data.ml_score * 100).toFixed(1) + '%';
+            scoreRules.innerText = (data.rules_score * 100).toFixed(1) + '%';
+
+            // Estilos según veredicto
+            banner.className = 'p-4 rounded-xl border flex items-center justify-between ';
+            if (data.decision === 'APROBADA') {
+                banner.classList.add('bg-emerald-500/10', 'border-emerald-500/30', 'text-emerald-300');
+                icon.className = 'w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400';
+                icon.innerHTML = '<i data-lucide="check-circle" class="w-6 h-6"></i>';
+            } else if (data.decision === 'CHALLENGE_2FA') {
+                banner.classList.add('bg-amber-500/10', 'border-amber-500/30', 'text-amber-300');
+                icon.className = 'w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400';
+                icon.innerHTML = '<i data-lucide="alert-triangle" class="w-6 h-6"></i>';
+            } else if (data.decision === 'REVISION_MANUAL') {
+                banner.classList.add('bg-orange-500/10', 'border-orange-500/30', 'text-orange-300');
+                icon.className = 'w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center text-orange-400';
+                icon.innerHTML = '<i data-lucide="eye" class="w-6 h-6"></i>';
+            } else {
+                banner.classList.add('bg-rose-500/10', 'border-rose-500/30', 'text-rose-300');
+                icon.className = 'w-10 h-10 rounded-xl bg-rose-500/20 flex items-center justify-center text-rose-400';
+                icon.innerHTML = '<i data-lucide="shield-alert" class="w-6 h-6"></i>';
+            }
+
+            // Reglas activadas
+            const rulesList = document.getElementById('rules-triggered-list');
+            if (data.rules_triggered && data.rules_triggered.length > 0) {
+                rulesList.innerHTML = data.rules_triggered.map(r => `
+                    <div class="p-2 bg-slate-800 border border-slate-700/80 rounded-lg flex items-start justify-between">
+                        <div>
+                            <span class="font-bold text-slate-200 block">${r.rule_name}</span>
+                            <span class="text-slate-400 text-[11px]">${r.description}</span>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${r.rule_type === 'HARD_BLOCK' ? 'bg-rose-500/20 text-rose-300' : 'bg-amber-500/20 text-amber-300'}">${r.rule_type}</span>
+                    </div>
+                `).join('');
+            } else {
+                rulesList.innerHTML = '<div class="text-slate-500 italic p-2 bg-slate-800/40 rounded-lg">Ninguna regla de riesgo se activó. Transacción consistente con perfil histórico.</div>';
+            }
+
+            // Actualizar SHAP chart
+            updateShapChart(data.top_shap_factors);
+            lucide.createIcons();
+        }
+
+        // Fetch reglas
+        async function fetchRules() {
+            try {
+                const res = await fetch('/v1/rules');
+                const rules = await res.json();
+                document.getElementById('badge-rules-count').innerText = rules.length;
+
+                const tbody = document.getElementById('rules-table-body');
+                tbody.innerHTML = rules.map(r => `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="py-3 px-4">
+                            <button onclick="toggleRule('${r.rule_id}')" class="px-2.5 py-1 rounded-full text-[11px] font-bold ${r.active ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500 border border-slate-700'}">
+                                ${r.active ? 'ACTIVA' : 'PAUSADA'}
+                            </button>
+                        </td>
+                        <td class="py-3 px-4 font-mono font-semibold text-slate-200">${r.rule_id}</td>
+                        <td class="py-3 px-4 font-medium">${r.name}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${r.rule_type === 'HARD_BLOCK' ? 'bg-rose-500/20 text-rose-300' : r.rule_type === 'CHALLENGE' ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-800 text-slate-300'}">
+                                ${r.rule_type}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-slate-400 font-mono text-[11px]">${r.field ? `${r.field} ${r.operator} ${r.threshold}` : 'Condición compuesta'}</td>
+                        <td class="py-3 px-4 font-bold text-slate-200">${(r.weight * 100).toFixed(0)}%</td>
+                        <td class="py-3 px-4 text-right">
+                            ${r.is_custom ? `
+                                <button onclick="deleteRule('${r.rule_id}')" class="text-rose-400 hover:text-rose-300 p-1 rounded transition" title="Eliminar regla personalizada">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            ` : '<span class="text-slate-600 text-[11px]">Base</span>'}
+                        </td>
+                    </tr>
+                `).join('');
+                lucide.createIcons();
+            } catch (e) {
+                console.error('Error cargando reglas:', e);
+            }
+        }
+
+        async function toggleRule(ruleId) {
+            try {
+                await fetch(`/v1/rules/${ruleId}/toggle`, { method: 'PATCH' });
+                fetchRules();
+            } catch (e) {
+                alert('Error al cambiar estado de la regla');
+            }
+        }
+
+        async function deleteRule(ruleId) {
+            if (!confirm(`¿Deseas eliminar la regla ${ruleId}?`)) return;
+            try {
+                await fetch(`/v1/rules/${ruleId}`, { method: 'DELETE' });
+                fetchRules();
+            } catch (e) {
+                alert('Error al eliminar regla');
+            }
+        }
+
+        function openCreateRuleModal() {
+            document.getElementById('modal-create-rule').classList.remove('hidden');
+        }
+
+        function closeCreateRuleModal() {
+            document.getElementById('modal-create-rule').classList.add('hidden');
+        }
+
+        async function submitNewRule(e) {
+            e.preventDefault();
+            const ruleType = document.getElementById('rule_type').value;
+            let forcedDecision = null;
+            if (ruleType === 'HARD_BLOCK') forcedDecision = 'RECHAZADA_PREVENTIVA';
+            else if (ruleType === 'CHALLENGE') forcedDecision = 'CHALLENGE_2FA';
+            else if (ruleType === 'REVISION_MANUAL') forcedDecision = 'REVISION_MANUAL';
+
+            const payload = {
+                rule_id: document.getElementById('rule_id').value.trim(),
+                name: document.getElementById('rule_name').value.trim(),
+                rule_type: ruleType,
+                field: document.getElementById('rule_field').value,
+                operator: document.getElementById('rule_operator').value,
+                threshold: parseFloat(document.getElementById('rule_threshold').value),
+                weight: 0.85,
+                description: document.getElementById('rule_description').value.trim(),
+                forced_decision: forcedDecision
+            };
+
+            try {
+                const res = await fetch('/v1/rules', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    closeCreateRuleModal();
+                    fetchRules();
+                    alert(`✅ Regla '${payload.rule_id}' creada y activada exitosamente. Ahora puedes probarla en el Simulador.`);
+                } else {
+                    const err = await res.json();
+                    alert('Error: ' + err.detail);
+                }
+            } catch (err) {
+                alert('Error creando regla: ' + err.message);
+            }
+        }
+
+        // Fetch transacciones recientes
+        async function fetchTransactions() {
+            try {
+                const res = await fetch('/v1/transactions');
+                const txs = await res.json();
+                const tbody = document.getElementById('tx-table-body');
+                if (!txs || txs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="py-4 text-center text-slate-500 italic">No hay transacciones en esta sesión aún. Califica una en el Simulador.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = txs.map(t => `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="py-3 px-4 font-mono text-[11px] text-slate-400">${t.timestamp.split('T')[1].split('.')[0]}</td>
+                        <td class="py-3 px-4 font-mono text-slate-300">${t.transaction_id.substring(0, 14)}...</td>
+                        <td class="py-3 px-4 font-semibold text-slate-200">${t.user_id}</td>
+                        <td class="py-3 px-4 font-bold text-emerald-400">COP $${t.amount.toLocaleString()}</td>
+                        <td class="py-3 px-4 text-slate-400">${t.channel}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
+                                t.decision === 'APROBADA' ? 'bg-emerald-500/20 text-emerald-300' :
+                                t.decision === 'CHALLENGE_2FA' ? 'bg-amber-500/20 text-amber-300' :
+                                t.decision === 'REVISION_MANUAL' ? 'bg-orange-500/20 text-orange-300' : 'bg-rose-500/20 text-rose-300'
+                            }">
+                                ${t.decision}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 font-mono text-slate-300">${(t.risk_score * 100).toFixed(1)}%</td>
+                        <td class="py-3 px-4 font-mono text-emerald-400">${t.latency_ms} ms</td>
+                        <td class="py-3 px-4 text-slate-400 text-[11px]">${t.rules_triggered.length > 0 ? t.rules_triggered.map(r => r.rule_name).join(', ') : 'Ninguna'}</td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error('Error cargando transacciones:', e);
+            }
+        }
+    </script>
+</body>
+</html>

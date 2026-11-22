@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yuma Pay | Billetera Digital</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .phone-frame {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 12px #1E293B, 0 0 0 14px #334155;
+            border-radius: 40px;
+        }
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #0F172A; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-3 sm:p-6 font-sans">
+
+    <!-- BARRA SUPERIOR DE CONTEXTO -->
+    <header class="w-full max-w-5xl mb-4 flex items-center justify-between text-xs bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl">
+        <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-slate-300 font-medium">Billetera Digital Yuma Pay (SEDPE)</span>
+            <span class="text-slate-600">|</span>
+            <span class="text-slate-400">Protegido por <strong>Escudo Yuma AI</strong></span>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="/monitor" target="_blank" class="px-3 py-1 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg flex items-center gap-1.5 transition">
+                <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+                Abrir Monitor del Administrador
+                <i data-lucide="external-link" class="w-3 h-3"></i>
+            </a>
+            <a href="/" class="text-slate-400 hover:text-slate-200">Menú Principal</a>
+        </div>
+    </header>
+
+    <!-- CONTENEDOR CENTRAL: TELÉFONO MÓVIL YUMA PAY -->
+    <div class="w-full max-w-sm phone-frame bg-slate-900 border border-slate-800 overflow-hidden flex flex-col relative" style="height: 750px;">
+        
+        <!-- NOTCH / BARRA DE ESTADO DEL MÓVIL -->
+        <div class="h-6 bg-slate-900 flex items-center justify-between px-6 pt-1 text-[10px] text-slate-400">
+            <span>09:42</span>
+            <div class="w-20 h-3 bg-slate-950 rounded-full mx-auto"></div>
+            <div class="flex items-center gap-1">
+                <i data-lucide="wifi" class="w-3 h-3"></i>
+                <i data-lucide="battery-charging" class="w-3 h-3 text-emerald-400"></i>
+            </div>
+        </div>
+
+        <!-- CABECERA DE LA APP BANCARIA -->
+        <div class="px-5 py-3 border-b border-slate-800/80 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-bold text-slate-950 text-xs shadow-md shadow-emerald-500/20">
+                    CM
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold text-slate-200">Carlos Mendoza</h3>
+                    <p class="text-[10px] text-slate-400">CC 1.020.495.812</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button onclick="toggleSecurityPanel()" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1 text-[11px]" title="Ajustes de Seguridad, IP y Ubicación">
+                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-400"></i>
+                    <span id="badge-city-header" class="text-slate-300 font-semibold">Bogotá</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- CUERPO PRINCIPAL DESPLAZABLE -->
+        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4 custom-scroll">
+            
+            <!-- TARJETA DE SALDO DISPONIBLE -->
+            <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-700 to-slate-900 shadow-lg text-white space-y-3 relative overflow-hidden">
+                <div class="flex items-center justify-between text-xs opacity-90">
+                    <span>Saldo Disponible</span>
+                    <button onclick="promptRecharge()" class="text-[10px] bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1 transition">
+                        <i data-lucide="plus" class="w-3 h-3"></i> Recargar
+                    </button>
+                </div>
+                <div>
+                    <span class="text-xs opacity-80">COP</span>
+                    <h1 class="text-2xl font-black tracking-tight" id="user-balance">$ 4.850.000</h1>
+                </div>
+                <div class="flex items-center justify-between pt-2 border-t border-white/10 text-[11px]">
+                    <span class="opacity-80">Cuenta No. 312-984-7120</span>
+                    <span class="flex items-center gap-1 font-semibold text-emerald-200">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Verificada
+                    </span>
+                </div>
+            </div>
+
+            <!-- BOTONES DE ACCIÓN RÁPIDA -->
+            <div class="grid grid-cols-4 gap-2 text-center text-[10px]">
+                <button class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 flex flex-col items-center gap-1 transition border border-slate-700/50">
+                    <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                        <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                    </div>
+                    <span>Enviar</span>
+                </button>
+                <button onclick="promptRecharge()" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 flex flex-col items-center gap-1 transition border border-slate-700/50">
+                    <div class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    </div>
+                    <span>Recargar</span>
+                </button>
+                <button onclick="setFullBalance()" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 flex flex-col items-center gap-1 transition border border-slate-700/50">
+                    <div class="w-8 h-8 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center">
+                        <i data-lucide="wallet" class="w-4 h-4"></i>
+                    </div>
+                    <span>Todo Saldo</span>
+                </button>
+                <button onclick="toggleSecurityPanel()" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 flex flex-col items-center gap-1 transition border border-slate-700/50">
+                    <div class="w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                        <i data-lucide="sliders" class="w-4 h-4"></i>
+                    </div>
+                    <span>IP / Ubic</span>
+                </button>
+            </div>
+
+            <!-- CONTACTOS FRECUENTES -->
+            <div>
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Enviar a Favoritos:</span>
+                <div class="flex gap-2 overflow-x-auto pb-1">
+                    <button onclick="selectContact('Mamá', '3001234567', 'BANCOLOMBIA')" class="flex-shrink-0 px-3 py-2 bg-slate-800 hover:bg-slate-750 border border-slate-700/60 rounded-xl text-left text-xs transition">
+                        <span class="font-bold text-slate-200 block">Mamá</span>
+                        <span class="text-[10px] text-slate-400">Bancolombia</span>
+                    </button>
+                    <button onclick="selectContact('Juan David', '3159988776', 'NEQUI')" class="flex-shrink-0 px-3 py-2 bg-slate-800 hover:bg-slate-750 border border-slate-700/60 rounded-xl text-left text-xs transition">
+                        <span class="font-bold text-slate-200 block">Juan David</span>
+                        <span class="text-[10px] text-slate-400">Nequi</span>
+                    </button>
+                    <button onclick="selectContact('Tienda Don Pedro', '3201122334', 'YUMA_PAY')" class="flex-shrink-0 px-3 py-2 bg-slate-800 hover:bg-slate-750 border border-slate-700/60 rounded-xl text-left text-xs transition">
+                        <span class="font-bold text-slate-200 block">Tienda Don Pedro</span>
+                        <span class="text-[10px] text-slate-400">QR Yuma</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- FORMULARIO DE TRANSFERENCIA -->
+            <form id="transfer-form" onsubmit="submitTransfer(event)" class="bg-slate-800/50 border border-slate-800 p-4 rounded-2xl space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+                    <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <i data-lucide="send" class="w-3.5 h-3.5 text-emerald-400"></i>
+                        Realizar Transferencia
+                    </span>
+                    <span class="text-[10px] text-slate-400">
+                        Max disponible: <strong class="text-emerald-400 font-mono" id="label-max-available">$ 4.850.000</strong>
+                    </span>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-[11px] text-slate-400">Monto a Enviar ($ COP)</label>
+                        <button type="button" onclick="setFullBalance()" class="text-[10px] text-emerald-400 hover:underline font-semibold">
+                            Usar todo el saldo
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-slate-400 text-xs font-bold">$</span>
+                        <input type="number" id="tx-amount" value="50000" min="1" step="any" required class="w-full pl-7 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-emerald-400 font-bold text-sm focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <span id="amount-warning" class="text-[10px] text-rose-400 mt-1 hidden font-semibold flex items-center gap-1">
+                        <i data-lucide="alert-circle" class="w-3 h-3"></i> Supera tu saldo disponible
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Entidad Destino</label>
+                        <select id="tx-bank" class="w-full px-2.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-slate-200 text-xs focus:outline-none focus:border-emerald-500">
+                            <option value="BANCOLOMBIA">Bancolombia</option>
+                            <option value="NEQUI">Nequi</option>
+                            <option value="DAVIPLATA">Daviplata</option>
+                            <option value="YUMA_PAY">Yuma Pay</option>
+                            <option value="DAVIVIENDA">Davivienda</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Canal</label>
+                        <select id="tx-channel" class="w-full px-2.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-slate-200 text-xs focus:outline-none focus:border-emerald-500">
+                            <option value="APP_MOVIL">App Móvil</option>
+                            <option value="QR_ESTATICO">Código QR</option>
+                            <option value="PSE">Transfiya / PSE</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Número de Celular o Cuenta Destino</label>
+                    <input type="text" id="tx-dest" value="3001234567" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-slate-200 text-xs focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <button type="submit" id="btn-transfer" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold rounded-xl transition shadow-lg shadow-emerald-500/20 text-xs flex items-center justify-center gap-2">
+                    <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                    Confirmar y Enviar Dinero
+                </button>
+            </form>
+
+        </div>
+
+        <!-- PANEL DE SIMULACIÓN DE ESCENARIOS, IP Y UBICACIÓN (DRAWER) -->
+        <div id="security-panel" class="absolute inset-x-0 bottom-0 bg-slate-900 border-t-2 border-emerald-500/50 p-5 rounded-t-3xl shadow-2xl transition-transform transform translate-y-full z-20 space-y-3 max-h-[85%] overflow-y-auto custom-scroll">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div class="flex items-center gap-1.5">
+                    <i data-lucide="sliders" class="w-4 h-4 text-emerald-400"></i>
+                    <h4 class="text-xs font-bold text-slate-200">Simulador de IP, Ubicación y Ataques</h4>
+                </div>
+                <button onclick="toggleSecurityPanel()" class="text-slate-400 hover:text-slate-200">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- CONFIGURACIÓN DE UBICACIÓN / GEOLOCALIZACIÓN -->
+            <div class="space-y-1.5 text-xs">
+                <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-400"></i>
+                    Ubicación / Ciudad de la Transacción:
+                </label>
+                <select id="tx-location" onchange="onLocationChange()" class="w-full px-2.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-none focus:border-emerald-500">
+                    <option value="Bogotá" data-lat="4.6097" data-lon="-74.0817">Bogotá, D.C. (Habitual del cliente)</option>
+                    <option value="Medellín" data-lat="6.2442" data-lon="-75.5812">Medellín (Antioquia)</option>
+                    <option value="Cali" data-lat="3.4516" data-lon="-76.5320">Cali (Valle del Cauca)</option>
+                    <option value="Barranquilla" data-lat="10.9685" data-lon="-74.7813">Barranquilla (Atlántico)</option>
+                    <option value="Cúcuta" data-lat="7.8939" data-lon="-72.5078">Cúcuta (Zona Fronteriza)</option>
+                    <option value="Miami" data-lat="25.7617" data-lon="-80.1918">Miami, USA (Internacional / Anómalo)</option>
+                    <option value="Moscú" data-lat="55.7558" data-lon="37.6173">Moscú / Lagos (Alto Riesgo Internacional)</option>
+                </select>
+            </div>
+
+            <!-- CONFIGURACIÓN DE DIRECCIÓN IP -->
+            <div class="space-y-1.5 text-xs">
+                <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                    <i data-lucide="globe" class="w-3.5 h-3.5 text-teal-400"></i>
+                    Dirección IP de Conexión:
+                </label>
+                <input type="text" id="tx-ip" value="186.84.92.14" class="w-full px-2.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 font-mono text-xs focus:outline-none focus:border-emerald-500">
+                <div class="flex gap-1.5 pt-1">
+                    <button type="button" onclick="setIpPreset('186.84.92.14')" class="px-2 py-1 bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded text-[10px] text-slate-300">
+                        IP Claro Col (Normal)
+                    </button>
+                    <button type="button" onclick="setIpPreset('45.142.122.9')" class="px-2 py-1 bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded text-[10px] text-amber-300">
+                        IP VPN / Proxy
+                    </button>
+                    <button type="button" onclick="setIpPreset('194.26.29.112')" class="px-2 py-1 bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded text-[10px] text-rose-300">
+                        IP Tor / Extranjera
+                    </button>
+                </div>
+            </div>
+
+            <!-- BANDERAS DE CONTEXTO DE SEGURIDAD (ATAQUES) -->
+            <div class="space-y-2 text-xs pt-1 border-t border-slate-800">
+                <span class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider">Otras Banderas de Riesgo:</span>
+                <label class="flex items-center justify-between p-2 rounded-xl bg-slate-800/80 border border-slate-700/60 cursor-pointer">
+                    <span class="text-slate-300">📱 SIM Swap reciente (&lt; 48h)</span>
+                    <input type="checkbox" id="sim-swap-chk" class="rounded bg-slate-700 border-slate-600 text-emerald-500">
+                </label>
+                <label class="flex items-center justify-between p-2 rounded-xl bg-slate-800/80 border border-slate-700/60 cursor-pointer">
+                    <span class="text-slate-300">🔑 Clave cambiada hace &lt; 2h</span>
+                    <input type="checkbox" id="pwd-reset-chk" class="rounded bg-slate-700 border-slate-600 text-emerald-500">
+                </label>
+                <label class="flex items-center justify-between p-2 rounded-xl bg-slate-800/80 border border-slate-700/60 cursor-pointer">
+                    <span class="text-slate-300">🕸️ Destino en Anillo de Mulas</span>
+                    <input type="checkbox" id="mule-chk" class="rounded bg-slate-700 border-slate-600 text-emerald-500">
+                </label>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-2 text-[11px]">
+                <button type="button" onclick="setPresetScenario('simswap')" class="py-1.5 px-2 bg-amber-500/20 text-amber-300 rounded-lg border border-amber-500/30 text-center font-semibold">
+                    Set: SIM Swap ($1.8M)
+                </button>
+                <button type="button" onclick="setPresetScenario('vpn_foreign')" class="py-1.5 px-2 bg-rose-500/20 text-rose-300 rounded-lg border border-rose-500/30 text-center font-semibold">
+                    Set: VPN Miami ($3.5M)
+                </button>
+            </div>
+        </div>
+
+        <!-- MODAL DE RESULTADO / REACCIÓN DE LA APP BANCARIA -->
+        <div id="result-modal" class="absolute inset-0 bg-slate-950/90 backdrop-blur-sm z-30 flex flex-col justify-end p-4 hidden">
+            <div id="modal-content" class="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-2xl text-center">
+                <!-- Se inyecta dinámicamente -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT DE LA APP BANCARIA -->
+    <script>
+        let currentBalance = 4850000;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            updateBalanceUI();
+
+            // Validación en tiempo real del input de monto
+            const amountInput = document.getElementById('tx-amount');
+            amountInput.addEventListener('input', () => {
+                const val = parseFloat(amountInput.value) || 0;
+                const warning = document.getElementById('amount-warning');
+                if (val > currentBalance) {
+                    warning.classList.remove('hidden');
+                    amountInput.classList.add('border-rose-500', 'text-rose-400');
+                    amountInput.classList.remove('border-slate-700', 'text-emerald-400');
+                } else {
+                    warning.classList.add('hidden');
+                    amountInput.classList.remove('border-rose-500', 'text-rose-400');
+                    amountInput.classList.add('border-slate-700', 'text-emerald-400');
+                }
+            });
+        });
+
+        function updateBalanceUI() {
+            document.getElementById('user-balance').innerText = '$ ' + currentBalance.toLocaleString('es-CO');
+            document.getElementById('label-max-available').innerText = '$ ' + currentBalance.toLocaleString('es-CO');
+        }
+
+        function setFullBalance() {
+            document.getElementById('tx-amount').value = currentBalance;
+            document.getElementById('amount-warning').classList.add('hidden');
+        }
+
+        function promptRecharge() {
+            const rechargeAmount = prompt('Ingresa el monto a recargar en Yuma Pay (COP):', '2000000');
+            if (rechargeAmount) {
+                const addVal = parseFloat(rechargeAmount);
+                if (!isNaN(addVal) && addVal > 0) {
+                    currentBalance += addVal;
+                    updateBalanceUI();
+                    alert(`✅ Saldo recargado con éxito: +$ ${addVal.toLocaleString('es-CO')} COP. Nuevo saldo: $ ${currentBalance.toLocaleString('es-CO')}`);
+                }
+            }
+        }
+
+        function onLocationChange() {
+            const locSelect = document.getElementById('tx-location');
+            const city = locSelect.value;
+            document.getElementById('badge-city-header').innerText = city;
+
+            // Si es Miami o internacional, sugerir IP internacional
+            if (city === 'Miami') {
+                setIpPreset('45.142.122.9');
+            } else if (city === 'Moscú') {
+                setIpPreset('194.26.29.112');
+            } else {
+                setIpPreset('186.84.92.14');
+            }
+        }
+
+        function setIpPreset(ip) {
+            document.getElementById('tx-ip').value = ip;
+        }
+
+        function toggleSecurityPanel() {
+            const panel = document.getElementById('security-panel');
+            panel.classList.toggle('translate-y-full');
+            lucide.createIcons();
+        }
+
+        function selectContact(name, dest, bank) {
+            document.getElementById('tx-dest').value = dest;
+            document.getElementById('tx-bank').value = bank;
+        }
+
+        function setPresetScenario(type) {
+            const amountInput = document.getElementById('tx-amount');
+            const simSwap = document.getElementById('sim-swap-chk');
+            const pwdReset = document.getElementById('pwd-reset-chk');
+            const muleChk = document.getElementById('mule-chk');
+            const locSelect = document.getElementById('tx-location');
+
+            simSwap.checked = false;
+            pwdReset.checked = false;
+            muleChk.checked = false;
+
+            if (type === 'simswap') {
+                amountInput.value = Math.min(1850000, currentBalance);
+                simSwap.checked = true;
+                locSelect.value = 'Bogotá';
+                setIpPreset('186.84.92.14');
+            } else if (type === 'vpn_foreign') {
+                amountInput.value = Math.min(3500000, currentBalance);
+                locSelect.value = 'Miami';
+                setIpPreset('45.142.122.9');
+                onLocationChange();
+            }
+            toggleSecurityPanel();
+        }
+
+        function showInsufficientBalanceModal(attempted, available) {
+            const modal = document.getElementById('result-modal');
+            const content = document.getElementById('modal-content');
+
+            content.innerHTML = `
+                <div class="w-14 h-14 rounded-full bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center">
+                    <i data-lucide="alert-circle" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-rose-400">Saldo Insuficiente</h3>
+                    <p class="text-xs text-slate-400 mt-1">No puedes transferir más plata de la que tienes en tu cuenta.</p>
+                </div>
+                <div class="bg-slate-800/80 p-3.5 rounded-2xl text-xs space-y-1.5 text-left border border-slate-700/60">
+                    <div class="flex justify-between"><span class="text-slate-400">Saldo Disponible:</span><strong class="text-emerald-400 font-mono">$ ${available.toLocaleString('es-CO')} COP</strong></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Monto Solicitado:</span><strong class="text-rose-400 font-mono">$ ${attempted.toLocaleString('es-CO')} COP</strong></div>
+                    <div class="flex justify-between border-t border-slate-700 pt-1 text-[11px]"><span class="text-slate-400">Te faltan:</span><span class="text-rose-400 font-bold font-mono">$ ${(attempted - available).toLocaleString('es-CO')} COP</span></div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="closeModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded-xl text-xs font-semibold transition">
+                        Ajustar Monto
+                    </button>
+                    <button onclick="promptRecharge(); closeModal();" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs transition">
+                        Recargar Saldo
+                    </button>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        async function submitTransfer(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-transfer');
+
+            const amount = parseFloat(document.getElementById('tx-amount').value);
+            const bank = document.getElementById('tx-bank').value;
+            const dest = document.getElementById('tx-dest').value;
+            const channel = document.getElementById('tx-channel').value;
+
+            // 1. REGLA INNEGOCIABLE: No se puede transferir más plata de la que tiene
+            if (amount <= 0 || isNaN(amount)) {
+                alert('Por favor ingresa un monto válido mayor a 0 COP.');
+                return;
+            }
+            if (amount > currentBalance) {
+                showInsufficientBalanceModal(amount, currentBalance);
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full"></span> Verificando con Escudo Yuma...';
+
+            // Datos de Ubicación e IP configurados
+            const locSelect = document.getElementById('tx-location');
+            const selectedOpt = locSelect.options[locSelect.selectedIndex];
+            const city = locSelect.value;
+            const lat = parseFloat(selectedOpt.getAttribute('data-lat')) || 4.6097;
+            const lon = parseFloat(selectedOpt.getAttribute('data-lon')) || -74.0817;
+            const ipAddress = document.getElementById('tx-ip').value.trim() || '186.84.92.14';
+
+            // Flags de contexto
+            const simSwap = document.getElementById('sim-swap-chk').checked;
+            const pwdReset = document.getElementById('pwd-reset-chk').checked;
+            const muleDest = document.getElementById('mule-chk').checked;
+
+            const payload = {
+                transaction_id: 'tx-yuma-' + Date.now(),
+                user_id: 'CC_1020495812',
+                amount: amount,
+                channel: channel,
+                destination_account: dest,
+                destination_bank: bank,
+                device_id: 'dev_trusted_user_1',
+                ip_address: ipAddress,
+                geolocation_lat: lat,
+                geolocation_lon: lon,
+                location_city: city,
+                sim_swap_within_48h: simSwap,
+                pwd_reset_within_24h: pwdReset,
+                is_mule_destination: muleDest,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                const t0 = performance.now();
+                const res = await fetch('/v1/decision', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                const latency = (performance.now() - t0).toFixed(1);
+
+                renderBankResult(data, amount, latency);
+
+            } catch (err) {
+                alert('Error comunicando con el core de Yuma Pay: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="lock" class="w-3.5 h-3.5"></i> Confirmar y Enviar Dinero';
+                lucide.createIcons();
+            }
+        }
+
+        function renderBankResult(data, amount, latency) {
+            const modal = document.getElementById('result-modal');
+            const content = document.getElementById('modal-content');
+
+            if (data.decision === 'APROBADA') {
+                currentBalance -= amount;
+                updateBalanceUI();
+
+                content.innerHTML = `
+                    <div class="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center">
+                        <i data-lucide="check-circle" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-100">¡Transferencia Exitosa!</h3>
+                        <p class="text-xs text-slate-400 mt-1">El dinero ha sido enviado correctamente.</p>
+                    </div>
+                    <div class="bg-slate-800/80 p-3 rounded-2xl text-xs space-y-1 text-left">
+                        <div class="flex justify-between"><span class="text-slate-400">Monto:</span><strong class="text-emerald-400 font-mono">COP $${amount.toLocaleString('es-CO')}</strong></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Nuevo Saldo:</span><span class="text-slate-200 font-mono">$${currentBalance.toLocaleString('es-CO')}</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Comprobante:</span><span class="font-mono text-slate-300">#YUM-${Date.now().toString().slice(-6)}</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Seguridad:</span><span class="text-emerald-400 font-semibold">Validado en ${data.latency_ms} ms</span></div>
+                    </div>
+                    <button onclick="closeModal()" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs transition">
+                        Aceptar
+                    </button>
+                `;
+            } else if (data.decision === 'CHALLENGE_2FA') {
+                content.innerHTML = `
+                    <div class="w-14 h-14 rounded-full bg-amber-500/20 text-amber-400 mx-auto flex items-center justify-center">
+                        <i data-lucide="shield-alert" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-100">Verificación de Seguridad</h3>
+                        <p class="text-xs text-slate-400 mt-1">Detectamos una actividad atípica en tu conexión (IP / Ubicación o cambio de SIM). Confirma tu identidad para continuar.</p>
+                    </div>
+                    <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 text-left">
+                        <span class="font-bold block">🚨 Notificación enviada al Monitor:</span>
+                        Se generó una alerta en el centro de control antifraude en tiempo real.
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="completeBiometrics(${amount})" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition">
+                            <i data-lucide="scan-face" class="w-4 h-4"></i>
+                            Validar con Biometría Facial
+                        </button>
+                        <button onclick="closeModal()" class="w-full py-2 bg-slate-800 text-slate-400 hover:text-slate-200 rounded-xl text-xs transition">
+                            Cancelar Operación
+                        </button>
+                    </div>
+                `;
+            } else if (data.decision === 'REVISION_MANUAL') {
+                content.innerHTML = `
+                    <div class="w-14 h-14 rounded-full bg-orange-500/20 text-orange-400 mx-auto flex items-center justify-center">
+                        <i data-lucide="clock" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-100">En Proceso de Verificación</h3>
+                        <p class="text-xs text-slate-400 mt-1">Tu transferencia está siendo revisada preventivamente por el equipo de seguridad bancaria.</p>
+                    </div>
+                    <div class="p-3 bg-slate-800 rounded-xl text-xs text-slate-300 text-left space-y-1">
+                        <span class="text-slate-400">Estado:</span> <strong class="text-orange-400">En Cola de Analistas</strong><br>
+                        <span class="text-slate-400">Tus fondos están retenidos de forma segura hasta aprobación.</span>
+                    </div>
+                    <button onclick="closeModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition">
+                        Entendido
+                    </button>
+                `;
+            } else {
+                // RECHAZADA PREVENTIVA
+                content.innerHTML = `
+                    <div class="w-14 h-14 rounded-full bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center">
+                        <i data-lucide="shield-x" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-rose-400">Transferencia Bloqueada</h3>
+                        <p class="text-xs text-slate-400 mt-1">Operación no autorizada por medidas de salvaguarda antifraude de Yuma Pay.</p>
+                    </div>
+                    <div class="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 text-left space-y-1">
+                        <span class="font-bold block">🛡️ Protección Activa:</span>
+                        Tus fondos no han salido de la cuenta. El incidente fue reportado en tiempo real al Monitor de Analistas.
+                    </div>
+                    <button onclick="closeModal()" class="w-full py-2.5 bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold rounded-xl text-xs transition">
+                        Regresar a la Billetera
+                    </button>
+                `;
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function completeBiometrics(amount) {
+            currentBalance -= amount;
+            updateBalanceUI();
+            alert('✅ Biometría facial verificada correctamente. Transferencia autorizada y fondos descontados.');
+            closeModal();
+        }
+
+        function closeModal() {
+            document.getElementById('result-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
